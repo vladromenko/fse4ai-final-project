@@ -2,30 +2,39 @@
 
 ## Real issue
 
-The real integration issue, its observed symptom, the fix, and the fixing
-commit hash will be recorded after all team branches have been merged and the
-integrated project has been tested.
+The CI run on the original `feature/tests-ci` branch failed during `ruff check .` with error `I001`. The test files started with an unnecessary blank line, so Ruff reported incorrectly formatted import blocks.
 
-No successful test result is claimed before that verification.
+The files were formatted with Ruff. The fix was committed as `a0a9b0b` (`fix: format tests for CI`). After the corrected branches were merged, the final CI run on `main` completed successfully.
 
 ## Unsupported input
 
-The operation contract does not support:
+The operation supports only CPU tensors with the `torch.float32` data type.
 
-- tensors with a data type other than `torch.float32`;
-- tensors located on a device other than CPU.
+A CPU tensor with the `torch.float64` data type was tested inside the final Docker image. The C++ `TORCH_CHECK` rejected it with:
 
-The exact runtime error messages will be confirmed after integration.
+```text
+RuntimeError
+shifted_relu: input must be torch.float32
+```
 
 ## Profiling
 
-The profiling command is:
+Profiling was performed inside the Linux Docker image with:
 
 ```bash
-python3 -m cProfile -s cumulative tools/profile_op.py
+docker run --rm \
+  -v "$PWD/tools:/opt/tools:ro" \
+  fse-ops:0.1 \
+  python3 -m cProfile -s cumulative /opt/tools/profile_op.py
 ```
 
-The profiling workload uses a `1000 x 1000` CPU `torch.float32` tensor and
-calls `shifted_relu` 50 times.
+The workload used a `1000 x 1000` CPU `torch.float32` tensor and called `shifted_relu` 50 times.
 
-The measured result will be recorded only after the extension has been built,
+The profiler reported:
+
+```text
+1091730 function calls (1067818 primitive calls) in 0.609 seconds
+1  0.000  0.000  0.020  0.020 profile_op.py:6(main)
+```
+
+The complete profiling run took `0.609` seconds. The cumulative time of the measured workload in `main` was `0.020` seconds.
