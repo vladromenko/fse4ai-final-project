@@ -28,7 +28,7 @@ docker-test:
 	docker run --rm $(IMAGE)
 
 clean:
-	rm -rf build dist .pytest_cache .ruff_cache
+	rm -rf build dist .pytest_cache .ruff_cache __pycache__/
 	rm -rf ./*.egg-info src/*.egg-info
 	find src tests tools -type d -name __pycache__ -prune -exec rm -rf {} +
 	find src tests tools -type f -name '*.py[co]' -delete
